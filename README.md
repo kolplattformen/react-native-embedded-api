@@ -27,6 +27,24 @@ status.on('ERROR', (err) => { /* BankID failed */ })
 
 ### Get data
 
+The data hooks return a `State<T>` object exposing the following properties:
+
+| Property | Description                      |
+|----------|----------------------------------|
+| `status` | `pending` `loading` `loaded`     |
+| `data`   | The requested data               |
+| `error`  | Error from the API call if any   |
+| `reload` | Function that triggers a reload  |
+
+The hook will return a useable default for data at first (usually empty `[]`).
+It then checks the cache (`AsyncStorage`) for any value and, if exists, updates data.
+Simultaneously the API is called. This only automatically happens once during the
+lifetime of the app. If several instances of the same hook are used, the data will be
+shared and only one API call made.
+When `reload` is called, a new API call will be made and all hook instances will have
+their `status`, `data` and `error` updated.
+
+
 #### useChildList
 
 ```javascript
