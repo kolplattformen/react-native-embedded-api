@@ -1,16 +1,16 @@
 import { renderHook, act } from '@testing-library/react-hooks'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import api from './api'
-import { useClassmates, rebuildStore } from './hooks'
+import { useMenu, rebuildStore } from './hooks'
 
 jest.mock('./api', () => ({
-  getClassmates: jest.fn()
+  getMenu: jest.fn()
 }))
 
-describe('useClassmates', () => {
+describe('useMenu', () => {
   let response = [{ id: '2' }]
   beforeEach(() => {
-    api.getClassmates.mockReturnValue(new Promise((resolve, reject) => {
+    api.getMenu.mockReturnValue(new Promise((resolve, reject) => {
       setTimeout(() => {
         if (response instanceof Error) reject(response)
         else resolve(response)
@@ -21,7 +21,7 @@ describe('useClassmates', () => {
   const child = { id: 'id' }
   it('data defaults to empty array', async () => {
     await act(async () => {
-      const { result, waitForNextUpdate } = renderHook(() => useClassmates(child))
+      const { result, waitForNextUpdate } = renderHook(() => useMenu(child))
       await waitForNextUpdate()
 
       const { data } = result.current
@@ -29,24 +29,24 @@ describe('useClassmates', () => {
     })
   })
   it('data returns contents of async storage', async () => {
-    const cachedItems = [{ id: '1' }]
-    await AsyncStorage.setItem('classmates_id', JSON.stringify(cachedItems))
+    const items = [{ id: '1' }]
+    await AsyncStorage.setItem('menu_id', JSON.stringify(items))
 
     await act(async () => {
-      const { result, waitForNextUpdate } = renderHook(() => useClassmates(child))
+      const { result, waitForNextUpdate } = renderHook(() => useMenu(child))
       await waitForNextUpdate()
       await waitForNextUpdate()
 
       const { data } = result.current
-      expect(data).toEqual(cachedItems)
+      expect(data).toEqual(items)
     })
   })
   it('data changes to contents of api on load', async () => {
     const cachedItems = [{ id: '1' }]
-    await AsyncStorage.setItem('classmates_id', JSON.stringify(cachedItems))
+    await AsyncStorage.setItem('menu_id', JSON.stringify(cachedItems))
 
     await act(async () => {
-      const { result, waitForNextUpdate } = renderHook(() => useClassmates(child))
+      const { result, waitForNextUpdate } = renderHook(() => useMenu(child))
       await waitForNextUpdate()
       await waitForNextUpdate()
       await waitForNextUpdate()
@@ -57,48 +57,48 @@ describe('useClassmates', () => {
   })
   it('stores contents of api in cache', async () => {
     const cachedItems = [{ id: '1' }]
-    await AsyncStorage.setItem('classmates_id', JSON.stringify(cachedItems))
+    await AsyncStorage.setItem('menu_id', JSON.stringify(cachedItems))
 
     await act(async () => {
-      const { waitForNextUpdate } = renderHook(() => useClassmates(child))
+      const { waitForNextUpdate } = renderHook(() => useMenu(child))
       await waitForNextUpdate()
       await waitForNextUpdate()
       await waitForNextUpdate()
 
-      const data = JSON.parse(await AsyncStorage.getItem('classmates_id'))
+      const data = JSON.parse(await AsyncStorage.getItem('menu_id'))
       expect(data).toEqual(response)
     })
   })
   it('status defaults to pending', async () => {
     await act(async () => {
-      const { result, waitForNextUpdate } = renderHook(() => useClassmates(child))
+      const { result, waitForNextUpdate } = renderHook(() => useMenu(child))
       await waitForNextUpdate()
 
       const { status } = result.current
       expect(status).toEqual('pending')
     })
   })
-  it('calls api.getClassmates', async () => {
+  it('calls api.getMenu', async () => {
     await act(async () => {
-      const { waitForNextUpdate } = renderHook(() => useClassmates(child))
+      const { waitForNextUpdate } = renderHook(() => useMenu(child))
 
       await waitForNextUpdate()
       await waitForNextUpdate()
 
-      expect(api.getClassmates).toHaveBeenCalledWith(child)
+      expect(api.getMenu).toHaveBeenCalledWith(child)
     })
   })
-  it('only calls api.getClassmates once', async () => {
+  it('only calls api.getMenu once', async () => {
     await act(async () => {
-      const { waitForNextUpdate: wait1 } = renderHook(() => useClassmates(child))
-      const { waitForNextUpdate: wait2 } = renderHook(() => useClassmates(child))
+      const { waitForNextUpdate: wait1 } = renderHook(() => useMenu(child))
+      const { waitForNextUpdate: wait2 } = renderHook(() => useMenu(child))
 
       await wait1()
       await wait1()
       await wait2()
       await wait2()
 
-      expect(api.getClassmates).toHaveBeenCalledTimes(1)
+      expect(api.getMenu).toHaveBeenCalledTimes(1)
     })
   })
 })

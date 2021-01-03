@@ -1,16 +1,16 @@
 import { renderHook, act } from '@testing-library/react-hooks'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import api from './api'
-import { rebuildStore, useChildList } from './hooks'
+import { useUser, rebuildStore } from './hooks'
 
 jest.mock('./api', () => ({
-  getChildren: jest.fn()
+  getUser: jest.fn()
 }))
 
-describe('useChildList', () => {
-  let response = [{ id: '2' }]
+describe('useUser', () => {
+  let response = { id: '2' }
   beforeEach(() => {
-    api.getChildren.mockReturnValue(new Promise((resolve, reject) => {
+    api.getUser.mockReturnValue(new Promise((resolve, reject) => {
       setTimeout(() => {
         if (response instanceof Error) reject(response)
         else resolve(response)
@@ -18,34 +18,34 @@ describe('useChildList', () => {
     }))
   })
   afterEach(() => rebuildStore())
-  it('data defaults to empty array', async () => {
+  it('data defaults to null', async () => {
     await act(async () => {
-      const { result, waitForNextUpdate } = renderHook(() => useChildList())
+      const { result, waitForNextUpdate } = renderHook(() => useUser())
       await waitForNextUpdate()
 
       const { data } = result.current
-      expect(data).toEqual([])
+      expect(data).toEqual(null)
     })
   })
   it('data returns contents of async storage', async () => {
-    const cached = [{ id: '1' }]
-    await AsyncStorage.setItem('children_all', JSON.stringify(cached))
+    const cachedUser = { id: '1' }
+    await AsyncStorage.setItem('user_me', JSON.stringify(cachedUser))
 
     await act(async () => {
-      const { result, waitForNextUpdate } = renderHook(() => useChildList())
+      const { result, waitForNextUpdate } = renderHook(() => useUser())
       await waitForNextUpdate()
       await waitForNextUpdate()
 
       const { data } = result.current
-      expect(data).toEqual(cached)
+      expect(data).toEqual(cachedUser)
     })
   })
   it('data changes to contents of api on load', async () => {
-    const cachedChildren = [{ id: '1' }]
-    await AsyncStorage.setItem('children_all', JSON.stringify(cachedChildren))
+    const cachedUser = { id: '1' }
+    await AsyncStorage.setItem('user_me', JSON.stringify(cachedUser))
 
     await act(async () => {
-      const { result, waitForNextUpdate } = renderHook(() => useChildList())
+      const { result, waitForNextUpdate } = renderHook(() => useUser())
       await waitForNextUpdate()
       await waitForNextUpdate()
       await waitForNextUpdate()
@@ -55,49 +55,49 @@ describe('useChildList', () => {
     })
   })
   it('stores contents of api in cache', async () => {
-    const cachedChildren = [{ id: '1' }]
-    await AsyncStorage.setItem('children_all', JSON.stringify(cachedChildren))
+    const cachedUser = { id: '1' }
+    await AsyncStorage.setItem('user_me', JSON.stringify(cachedUser))
 
     await act(async () => {
-      const { waitForNextUpdate } = renderHook(() => useChildList())
+      const { waitForNextUpdate } = renderHook(() => useUser())
       await waitForNextUpdate()
       await waitForNextUpdate()
       await waitForNextUpdate()
 
-      const data = JSON.parse(await AsyncStorage.getItem('children_all'))
+      const data = JSON.parse(await AsyncStorage.getItem('user_me'))
       expect(data).toEqual(response)
     })
   })
   it('status defaults to pending', async () => {
     await act(async () => {
-      const { result, waitForNextUpdate } = renderHook(() => useChildList())
+      const { result, waitForNextUpdate } = renderHook(() => useUser())
       await waitForNextUpdate()
 
       const { status } = result.current
       expect(status).toEqual('pending')
     })
   })
-  it('calls api.getChildren', async () => {
+  it('calls api.getUser', async () => {
     await act(async () => {
-      const { waitForNextUpdate } = renderHook(() => useChildList())
+      const { waitForNextUpdate } = renderHook(() => useUser())
 
       await waitForNextUpdate()
       await waitForNextUpdate()
 
-      expect(api.getChildren).toHaveBeenCalledWith()
+      expect(api.getUser).toHaveBeenCalledWith()
     })
   })
-  it('only calls api.getChildren once', async () => {
+  it('only calls api.getUser once', async () => {
     await act(async () => {
-      const { waitForNextUpdate: wait1 } = renderHook(() => useChildList())
-      const { waitForNextUpdate: wait2 } = renderHook(() => useChildList())
+      const { waitForNextUpdate: wait1 } = renderHook(() => useUser())
+      const { waitForNextUpdate: wait2 } = renderHook(() => useUser())
 
       await wait1()
       await wait1()
       await wait2()
       await wait2()
 
-      expect(api.getChildren).toHaveBeenCalledWith()
+      expect(api.getUser).toHaveBeenCalledTimes(1)
     })
   })
 })

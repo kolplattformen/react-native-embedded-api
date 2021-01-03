@@ -1,16 +1,17 @@
 import { renderHook, act } from '@testing-library/react-hooks'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { DateTime } from 'luxon'
 import api from './api'
-import { useClassmates, rebuildStore } from './hooks'
+import { useSchedule, rebuildStore } from './hooks'
 
 jest.mock('./api', () => ({
-  getClassmates: jest.fn()
+  getSchedule: jest.fn()
 }))
 
-describe('useClassmates', () => {
+describe('useSchedule', () => {
   let response = [{ id: '2' }]
   beforeEach(() => {
-    api.getClassmates.mockReturnValue(new Promise((resolve, reject) => {
+    api.getSchedule.mockReturnValue(new Promise((resolve, reject) => {
       setTimeout(() => {
         if (response instanceof Error) reject(response)
         else resolve(response)
@@ -19,9 +20,11 @@ describe('useClassmates', () => {
   })
   afterEach(() => rebuildStore())
   const child = { id: 'id' }
+  const from = DateTime.fromISO('2021-01-01')
+  const to = DateTime.fromISO('2021-01-08')
   it('data defaults to empty array', async () => {
     await act(async () => {
-      const { result, waitForNextUpdate } = renderHook(() => useClassmates(child))
+      const { result, waitForNextUpdate } = renderHook(() => useSchedule(child, from, to))
       await waitForNextUpdate()
 
       const { data } = result.current
@@ -29,24 +32,24 @@ describe('useClassmates', () => {
     })
   })
   it('data returns contents of async storage', async () => {
-    const cachedItems = [{ id: '1' }]
-    await AsyncStorage.setItem('classmates_id', JSON.stringify(cachedItems))
+    const items = [{ id: '1' }]
+    await AsyncStorage.setItem('schedule_id_2021-01-01_2021-01-08', JSON.stringify(items))
 
     await act(async () => {
-      const { result, waitForNextUpdate } = renderHook(() => useClassmates(child))
+      const { result, waitForNextUpdate } = renderHook(() => useSchedule(child, from, to))
       await waitForNextUpdate()
       await waitForNextUpdate()
 
       const { data } = result.current
-      expect(data).toEqual(cachedItems)
+      expect(data).toEqual(items)
     })
   })
   it('data changes to contents of api on load', async () => {
     const cachedItems = [{ id: '1' }]
-    await AsyncStorage.setItem('classmates_id', JSON.stringify(cachedItems))
+    await AsyncStorage.setItem('schedule_id_2021-01-01_2021-01-08', JSON.stringify(cachedItems))
 
     await act(async () => {
-      const { result, waitForNextUpdate } = renderHook(() => useClassmates(child))
+      const { result, waitForNextUpdate } = renderHook(() => useSchedule(child, from, to))
       await waitForNextUpdate()
       await waitForNextUpdate()
       await waitForNextUpdate()
@@ -57,48 +60,48 @@ describe('useClassmates', () => {
   })
   it('stores contents of api in cache', async () => {
     const cachedItems = [{ id: '1' }]
-    await AsyncStorage.setItem('classmates_id', JSON.stringify(cachedItems))
+    await AsyncStorage.setItem('schedule_id_2021-01-01_2021-01-08', JSON.stringify(cachedItems))
 
     await act(async () => {
-      const { waitForNextUpdate } = renderHook(() => useClassmates(child))
+      const { waitForNextUpdate } = renderHook(() => useSchedule(child, from, to))
       await waitForNextUpdate()
       await waitForNextUpdate()
       await waitForNextUpdate()
 
-      const data = JSON.parse(await AsyncStorage.getItem('classmates_id'))
+      const data = JSON.parse(await AsyncStorage.getItem('schedule_id_2021-01-01_2021-01-08'))
       expect(data).toEqual(response)
     })
   })
   it('status defaults to pending', async () => {
     await act(async () => {
-      const { result, waitForNextUpdate } = renderHook(() => useClassmates(child))
+      const { result, waitForNextUpdate } = renderHook(() => useSchedule(child, from, to))
       await waitForNextUpdate()
 
       const { status } = result.current
       expect(status).toEqual('pending')
     })
   })
-  it('calls api.getClassmates', async () => {
+  it('calls api.getSchedule', async () => {
     await act(async () => {
-      const { waitForNextUpdate } = renderHook(() => useClassmates(child))
+      const { waitForNextUpdate } = renderHook(() => useSchedule(child, from, to))
 
       await waitForNextUpdate()
       await waitForNextUpdate()
 
-      expect(api.getClassmates).toHaveBeenCalledWith(child)
+      expect(api.getSchedule).toHaveBeenCalledWith(child, from, to)
     })
   })
-  it('only calls api.getClassmates once', async () => {
+  it('only calls api.getSchedule once', async () => {
     await act(async () => {
-      const { waitForNextUpdate: wait1 } = renderHook(() => useClassmates(child))
-      const { waitForNextUpdate: wait2 } = renderHook(() => useClassmates(child))
+      const { waitForNextUpdate: wait1 } = renderHook(() => useSchedule(child, from, to))
+      const { waitForNextUpdate: wait2 } = renderHook(() => useSchedule(child, from, to))
 
       await wait1()
       await wait1()
       await wait2()
       await wait2()
 
-      expect(api.getClassmates).toHaveBeenCalledTimes(1)
+      expect(api.getSchedule).toHaveBeenCalledTimes(1)
     })
   })
 })
