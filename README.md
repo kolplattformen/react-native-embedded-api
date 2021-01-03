@@ -2,8 +2,9 @@
 
 ## Installing
 
-`npm i -S @skolplattformen/react-native-embedded-api`
-or `yarn add @skolplattformen/react-native-embedded-api`
+```npm i -S @skolplattformen/react-native-embedded-api```
+
+```yarn add @skolplattformen/react-native-embedded-api```
 
 ## Using
 
