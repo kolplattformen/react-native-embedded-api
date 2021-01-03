@@ -230,6 +230,15 @@ const createHook = <T, A extends any[]>(
   return { ...state, reload }
 }
 
+export const useApi = () => {
+  return {
+    login: (personalNumber: string) => api.login(personalNumber),
+    logout: () => api.logout(),
+    on: (event: 'login' | 'logout', listener: () => any) => api.on(event, listener),
+    off: (event: 'login' | 'logout', listener: () => any) => api.off(event, listener),
+  }
+}
+
 export const useCalendar = createHook<CalendarItem[], [Child]>(
   'calendar', (child) => api.getCalendar(child), (child) => child.id, []
 )
