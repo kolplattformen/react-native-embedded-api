@@ -282,5 +282,5 @@ export const useSchedule = createHook<ScheduleItem[], [Child, DateTime, DateTime
   [],
 )
 export const useUser = createHook<User | null, []>(
-  'user', () => api.getUser(), () => 'me', null,
+  'user', () => api.getUser(), () => 'me', {},
 )

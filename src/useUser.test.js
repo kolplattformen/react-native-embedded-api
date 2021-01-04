@@ -18,13 +18,13 @@ describe('useUser', () => {
     }))
   })
   afterEach(() => rebuildStore())
-  it('data defaults to null', async () => {
+  it('data defaults to empty object', async () => {
     await act(async () => {
       const { result, waitForNextUpdate } = renderHook(() => useUser())
       await waitForNextUpdate()
 
       const { data } = result.current
-      expect(data).toEqual(null)
+      expect(data).toEqual({})
     })
   })
   it('data returns contents of async storage', async () => {
