@@ -13,16 +13,33 @@
 ```javascript
 import { useApi } from '@skolplattformen/react-native-embedded-api'
 
-const { login, logout, on } = useApi()
-on('login', () => { /* do login stuff */ })
-on('logout', () => { /* do logout stuff */ })
+export default function LoginController () {
+  const { login, logout, on, isLoggedIn } = useApi()
 
-const status = await login('my personal number')
-// open BankID using status.token
-status.on('PENDING', () => { /* BankID app not yet opened */ })
-status.on('USER_SIGN', () => { /* BankID app is open */ })
-status.on('OK', () => { /* BankID signed. NOTE! User is NOT yet logged in! */ })
-status.on('ERROR', (err) => { /* BankID failed */ })
+  on('login', () => { /* do login stuff */ })
+  on('logout', () => { /* do logout stuff */ })
+
+  const [personalNumber, setPersonalNumber] = useState()
+  const [bankIdStatus, setBankIdStatus] = useState('')
+
+  const doLogin = async () => {
+    const status = await login(personalNumber)
+    // open BankID using status.token
+    status.on('PENDING', () => { setBankIdStatus('BankID app not yet opened') })
+    status.on('USER_SIGN', () => { setBankIdStatus('BankID app is open') })
+    status.on('OK', () => { setBankIdStatus('BankID signed. NOTE! User is NOT yet logged in!') })
+    status.on('ERROR', (err) => { setBankIdStatus('BankID failed') })
+  })
+
+  return (
+    <View>
+      <Input value={personalNumber} onChange={(value) = setPersonalNumber(value)} />
+      <Button onClick={() => doLogin()}>
+      <Text>{bankIdStatus}</Text>
+      <Text>Logged in: {isLoggedIn}</Text>
+    </View>
+  )
+}
 ```
 
 ### Get data

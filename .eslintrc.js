@@ -5,6 +5,10 @@ module.exports = {
     sourceType: 'module', // Allows for the use of imports
     project: ['./tsconfig.json']
   },
+  env: {
+    node: true,
+    jest: true
+  },
   extends: [
     'airbnb-typescript/base',
   ],

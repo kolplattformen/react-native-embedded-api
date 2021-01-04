@@ -231,13 +231,28 @@ const createHook = <T, A extends any[]>(
     return { ...state, reload }
   }
 
-export const useApi = () => ({
-  login: (personalNumber: string) => api.login(personalNumber),
-  logout: () => api.logout(),
-  on: (event: 'login' | 'logout', listener: () => any) => api.on(event, listener),
-  off: (event: 'login' | 'logout', listener: () => any) => api.off(event, listener),
-})
+// Hooks
+export const useApi = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(api.isLoggedIn)
 
+  const loginHandler = () => setIsLoggedIn(true)
+  const logoutHandler = () => setIsLoggedIn(false)
+
+  useEffect(() => {
+    api.on('login', loginHandler).on('logout', logoutHandler)
+    return () => {
+      api.off('login', loginHandler).off('logout', logoutHandler)
+    }
+  }, [])
+
+  return {
+    isLoggedIn,
+    login: (personalNumber: string) => api.login(personalNumber),
+    logout: () => api.logout(),
+    on: (event: 'login' | 'logout', listener: () => any) => api.on(event, listener),
+    off: (event: 'login' | 'logout', listener: () => any) => api.off(event, listener),
+  }
+}
 export const useCalendar = createHook<CalendarItem[], [Child]>(
   'calendar', (child) => api.getCalendar(child), (child) => child.id, [],
 )
