@@ -12,7 +12,8 @@ jest.mock('./api', () => ({
 }))
 
 describe('useApi', () => {
-  let status, emitter
+  let status
+  let emitter
   beforeEach(() => {
     emitter = new EventEmitter()
     status = {}

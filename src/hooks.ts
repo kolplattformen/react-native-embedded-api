@@ -182,55 +182,55 @@ const createHook = <T, A extends any[]>(
   keyFunc: (...args: A) => string,
   empty: T,
 ) => (...args: A): ReloadableState<T> => {
-    let isMounted = false
+  let isMounted = false
 
-    const getState = (): State<T> => (
-      store.getState()[entity][keyFunc(...args)] || { status: 'pending', data: empty }
-    )
-    const { getFromApi, getFromCache } = createActions<T, A>(entity, apiCall, keyFunc)
+  const getState = (): State<T> => (
+    store.getState()[entity][keyFunc(...args)] || { status: 'pending', data: empty }
+  )
+  const { getFromApi, getFromCache } = createActions<T, A>(entity, apiCall, keyFunc)
 
-    const initial = getState()
-    const [state, setState] = useState<State<T>>(initial)
+  const initial = getState()
+  const [state, setState] = useState<State<T>>(initial)
 
-    // Listen for changes in the store
-    store.subscribe(() => {
-      if (!isMounted) return
+  // Listen for changes in the store
+  store.subscribe(() => {
+    if (!isMounted) return
 
-      const newState = getState()
-      if (newState && JSON.stringify(state) !== JSON.stringify(newState)) {
-        if (!newState.data) newState.data = empty
-        setState(newState)
-      }
-    })
+    const newState = getState()
+    if (newState && JSON.stringify(state) !== JSON.stringify(newState)) {
+      if (!newState.data) newState.data = empty
+      setState(newState)
+    }
+  })
 
-    // Load data from cache and API
-    const reload = async (force = true) => {
+  // Load data from cache and API
+  const reload = async (force = true) => {
     // allready loading or done
-      if (state.status === 'loading' || (state.status === 'loaded' && !force)) {
-        return
-      }
+    if (state.status === 'loading' || (state.status === 'loaded' && !force)) {
+      return
+    }
 
-      // first load
-      if (state.status === 'pending') {
-        const action = getFromCache(...args)
-        store.dispatch(action)
-      }
-
-      // call api
-      const action = getFromApi(...args)
+    // first load
+    if (state.status === 'pending') {
+      const action = getFromCache(...args)
       store.dispatch(action)
     }
 
-    useEffect(() => {
-      isMounted = true
-      reload(false)
-      return () => {
-        isMounted = false
-      }
-    }, args)
-
-    return { ...state, reload }
+    // call api
+    const action = getFromApi(...args)
+    store.dispatch(action)
   }
+
+  useEffect(() => {
+    isMounted = true
+    reload(false)
+    return () => {
+      isMounted = false
+    }
+  }, args)
+
+  return { ...state, reload }
+}
 
 // Hooks
 export const useApi = () => {
