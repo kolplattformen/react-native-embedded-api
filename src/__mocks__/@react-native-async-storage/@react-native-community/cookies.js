@@ -1,5 +1,5 @@
 const CookieManager = {
-  clearAll: jest.fn()
+  clearAll: jest.fn(),
 }
 
 export default CookieManager

@@ -4,11 +4,11 @@ import api from './api'
 import { useClassmates, rebuildStore } from './hooks'
 
 jest.mock('./api', () => ({
-  getClassmates: jest.fn()
+  getClassmates: jest.fn(),
 }))
 
 describe('useClassmates', () => {
-  let response = [{ id: '2' }]
+  const response = [{ id: '2' }]
   beforeEach(() => {
     api.getClassmates.mockReturnValue(new Promise((resolve, reject) => {
       setTimeout(() => {

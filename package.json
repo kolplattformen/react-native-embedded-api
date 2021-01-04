@@ -2,12 +2,20 @@
   "name": "@skolplattformen/react-native-embedded-api",
   "version": "0.0.0",
   "description": "React Native wrapper for embedded-api",
-  "main": "lib/",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
   "author": "Johan Öbrink <johan.obrink@gmail.com>",
   "license": "Apache-2.0",
   "private": false,
   "scripts": {
-    "test": "jest"
+    "lint": "eslint 'src/**/*.ts' --quiet --fix",
+    "test": "jest",
+    "build": "tsc",
+    "prepare": "yarn build",
+    "publish-package": "npm publish --access public"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^1.13.2",
@@ -28,7 +36,12 @@
     "@types/jest": "^26.0.19",
     "@types/luxon": "^1.25.0",
     "@types/react": "^17.0.0",
+    "@typescript-eslint/eslint-plugin": "^4.10.0",
+    "@typescript-eslint/parser": "^4.10.0",
     "babel-jest": "^26.6.3",
+    "eslint": "^7.16.0",
+    "eslint-config-airbnb-typescript": "^12.0.0",
+    "eslint-plugin-import": "^2.22.1",
     "jest": "^26.6.3",
     "jest-fetch-mock": "^3.0.3",
     "node-blob": "^0.0.2",

@@ -4,11 +4,11 @@ import api from './api'
 import { useNotifications, rebuildStore } from './hooks'
 
 jest.mock('./api', () => ({
-  getNotifications: jest.fn()
+  getNotifications: jest.fn(),
 }))
 
 describe('useNotifications', () => {
-  let response = [{ id: '2' }]
+  const response = [{ id: '2' }]
   beforeEach(() => {
     api.getNotifications.mockReturnValue(new Promise((resolve, reject) => {
       setTimeout(() => {

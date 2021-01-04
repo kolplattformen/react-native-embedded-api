@@ -1,22 +1,22 @@
 import {
   createAsyncThunk,
   createSlice,
-  SliceCaseReducers
+  Draft,
+  SliceCaseReducers,
 } from '@reduxjs/toolkit'
 import {
   ApiCall,
   ArgsToKey,
   StateMap,
   Part,
-  ThunkArgs
+  ThunkArgs,
 } from './types'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 
 export const createPart = <R, A extends any[]>(
   name: string,
   argsToKey: ArgsToKey<A>,
   apiCall: ApiCall<R, A>,
-  initialState: R
+  initialState: R,
 ): Part<R, A> => {
   const thunk = createAsyncThunk<R, ThunkArgs<A>>(name, async ([args]): Promise<R> => (
     apiCall(...args)
@@ -27,11 +27,11 @@ export const createPart = <R, A extends any[]>(
     initialState: {},
     reducers: {},
     extraReducers: (builder) => {
-      const resolveKey = <T extends any[]>([args, argsToKey]: ThunkArgs<T>) => argsToKey(...args)
+      const resolveKey = <T extends any[]>([args, resolve]: ThunkArgs<T>) => resolve(...args)
       builder.addCase(thunk.pending, (state, action) => {
         const key = resolveKey(action.meta.arg)
         state[key] = {
-          data: undefined,
+          ...state[key],
           status: 'loading',
           error: undefined,
         }
@@ -40,7 +40,8 @@ export const createPart = <R, A extends any[]>(
       builder.addCase(thunk.fulfilled, (state, action) => {
         const key = resolveKey(action.meta.arg)
         state[key] = {
-          data: action.payload,
+          ...state[key],
+          data: action.payload as Draft<R>,
           status: 'loaded',
           error: undefined,
         }
@@ -49,12 +50,12 @@ export const createPart = <R, A extends any[]>(
       builder.addCase(thunk.rejected, (state, action) => {
         const key = resolveKey(action.meta.arg)
         state[key] = {
-          data: undefined,
-          status: 'loaded',
-          error: action.error
+          ...state[key],
+          status: 'pending',
+          error: action.error,
         }
       })
-    }
+    },
   })
 
   return {
@@ -64,6 +65,6 @@ export const createPart = <R, A extends any[]>(
     initialState: {
       status: 'pending',
       data: initialState,
-    }
+    },
   }
 }

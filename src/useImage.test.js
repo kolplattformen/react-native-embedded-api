@@ -1,15 +1,15 @@
 import { renderHook, act } from '@testing-library/react-hooks'
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import Blob from 'node-blob'
 import api from './api'
 import { useImage, rebuildStore } from './hooks'
-import Blob from 'node-blob'
 
 jest.mock('./api', () => ({
-  getImage: jest.fn()
+  getImage: jest.fn(),
 }))
 
 describe('useImage', () => {
-  let response = new Blob()
+  const response = new Blob()
   beforeEach(() => {
     api.getImage.mockReturnValue(new Promise((resolve, reject) => {
       setTimeout(() => {

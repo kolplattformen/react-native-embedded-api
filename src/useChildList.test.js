@@ -4,11 +4,11 @@ import api from './api'
 import { rebuildStore, useChildList } from './hooks'
 
 jest.mock('./api', () => ({
-  getChildren: jest.fn()
+  getChildren: jest.fn(),
 }))
 
 describe('useChildList', () => {
-  let response = [{ id: '2' }]
+  const response = [{ id: '2' }]
   beforeEach(() => {
     api.getChildren.mockReturnValue(new Promise((resolve, reject) => {
       setTimeout(() => {

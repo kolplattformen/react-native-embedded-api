@@ -4,11 +4,11 @@ import api from './api'
 import { useMenu, rebuildStore } from './hooks'
 
 jest.mock('./api', () => ({
-  getMenu: jest.fn()
+  getMenu: jest.fn(),
 }))
 
 describe('useMenu', () => {
-  let response = [{ id: '2' }]
+  const response = [{ id: '2' }]
   beforeEach(() => {
     api.getMenu.mockReturnValue(new Promise((resolve, reject) => {
       setTimeout(() => {

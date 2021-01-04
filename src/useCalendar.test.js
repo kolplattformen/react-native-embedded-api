@@ -4,11 +4,11 @@ import api from './api'
 import { useCalendar, rebuildStore } from './hooks'
 
 jest.mock('./api', () => ({
-  getCalendar: jest.fn()
+  getCalendar: jest.fn(),
 }))
 
 describe('useCalendar', () => {
-  let response = [{ id: '2' }]
+  const response = [{ id: '2' }]
   beforeEach(() => {
     api.getCalendar.mockReturnValue(new Promise((resolve, reject) => {
       setTimeout(() => {

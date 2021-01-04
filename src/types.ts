@@ -1,4 +1,6 @@
-import { AsyncThunkAction, SerializedError, Slice, SliceCaseReducers } from '@reduxjs/toolkit'
+import {
+  AsyncThunkAction, SerializedError, Slice, SliceCaseReducers,
+} from '@reduxjs/toolkit'
 
 export interface State<T> {
   data?: T

@@ -5,11 +5,11 @@ import api from './api'
 import { useSchedule, rebuildStore } from './hooks'
 
 jest.mock('./api', () => ({
-  getSchedule: jest.fn()
+  getSchedule: jest.fn(),
 }))
 
 describe('useSchedule', () => {
-  let response = [{ id: '2' }]
+  const response = [{ id: '2' }]
   beforeEach(() => {
     api.getSchedule.mockReturnValue(new Promise((resolve, reject) => {
       setTimeout(() => {
