@@ -46,7 +46,6 @@ export default function LoginController () {
 1. [useCalendar](#useCalendar)
 1. [useChildList](#useChildList)
 1. [useClassmates](#useClassmates)
-1. [useImage](#useImage)
 1. [useMenu](#useMenu)
 1. [useNews](#useNews)
 1. [useNotifications](#useNotifications)
@@ -135,24 +134,6 @@ export default function ClassmatesComponent ({ selectedChild }) => {
 }
 ```
 
-### ~~useImage~~
-
-_This is not yet working_
-
-```javascript
-import { useImage } from '@skolplattformen/react-native-embedded-api'
-
-export default function ImageComponent ({ selectedChild }) => {
-  const { status, data, error, reload } = useImage(selectedChild)
-
-  // Magic happens here
-  
-  return (
-    <Img source={} />
-  )
-}
-```
-
 ### useMenu
 
 ```javascript
@@ -195,6 +176,23 @@ export default function NewsComponent ({ selectedChild }) => {
 }
 ```
 
+To display image from `NewsItem`:
+
+```javascript
+import { useApi } from '@skolplattformen/react-native-embedded-api'
+
+export default function NewsItem ({ item }) => {
+  const { cookie } = useApi()
+  
+  return (
+    <View>
+      { cookie &&
+        <Image source={{ uri: item.fullImageUrl, headers: { cookie } }} /> }
+    </View>
+  )
+}
+```
+
 ### useNotifications
 
 ```javascript
@@ -211,6 +209,23 @@ export default function NotificationsComponent ({ selectedChild }) => {
         <Notification item={item} />
       ))}
       { status !== 'loading' && status !== 'pending' && <Button onClick={() => reload()}> }
+    </View>
+  )
+}
+```
+
+To show content of `NotificationItem` url:
+
+```javascript
+import { useApi } from '@skolplattformen/react-native-embedded-api'
+import { WebView } from 'react-native-webview'
+
+export default function Notification ({ item }) => {
+  const { cookie } = useApi()
+  
+  return (
+    <View>
+      <WebView source={{ uri: item.url, headers: { cookie }}} />
     </View>
   )
 }
