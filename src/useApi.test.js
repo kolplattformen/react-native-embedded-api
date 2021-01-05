@@ -9,6 +9,7 @@ jest.mock('./api', () => ({
   logout: jest.fn(),
   on: jest.fn(),
   off: jest.fn(),
+  getSessionCookie: jest.fn(),
 }))
 
 describe('useApi', () => {
@@ -20,6 +21,7 @@ describe('useApi', () => {
     api.login.mockResolvedValue(status)
     api.on.mockImplementation((...args) => emitter.on(...args))
     api.off.mockImplementation((...args) => emitter.on(...args))
+    api.getSessionCookie.mockReturnValue(undefined)
   })
   describe('#login', () => {
     it('calls through to login', () => {
@@ -83,6 +85,49 @@ describe('useApi', () => {
         await waitForNextUpdate()
 
         expect(result.current.isLoggedIn).toEqual(false)
+      })
+    })
+  })
+
+  describe('.cookie', () => {
+    it('defaults to undefined', () => {
+      const { result } = renderHook(() => useApi())
+      const { cookie } = result.current
+
+      expect(cookie).toEqual(undefined)
+    })
+    it('defaults to true if session cookie exists', () => {
+      api.getSessionCookie.mockReturnValue('cookie')
+
+      const { result } = renderHook(() => useApi())
+      const { cookie } = result.current
+
+      expect(cookie).toEqual('cookie')
+    })
+    it('updates value on(`login`)', async () => {
+      const { result, waitForNextUpdate } = renderHook(() => useApi())
+
+      expect(result.current.cookie).toEqual(undefined)
+
+      await act(async () => {
+        api.getSessionCookie.mockReturnValue('cookie')
+        emitter.emit('login')
+        await waitForNextUpdate()
+
+        expect(result.current.cookie).toEqual('cookie')
+      })
+    })
+    it('changes to false on(`logout`)', async () => {
+      api.getSessionCookie.mockReturnValue('cookie')
+      const { result, waitForNextUpdate } = renderHook(() => useApi())
+
+      expect(result.current.cookie).toEqual('cookie')
+
+      await act(async () => {
+        emitter.emit('logout')
+        await waitForNextUpdate()
+
+        expect(result.current.cookie).toEqual(undefined)
       })
     })
   })

@@ -235,9 +235,16 @@ const createHook = <T, A extends any[]>(
 // Hooks
 export const useApi = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(api.isLoggedIn)
+  const [cookie, setCookie] = useState(api.getSessionCookie())
 
-  const loginHandler = () => setIsLoggedIn(true)
-  const logoutHandler = () => setIsLoggedIn(false)
+  const loginHandler = () => {
+    setIsLoggedIn(true)
+    setCookie(api.getSessionCookie())
+  }
+  const logoutHandler = () => {
+    setIsLoggedIn(false)
+    setCookie(undefined)
+  }
 
   useEffect(() => {
     api.on('login', loginHandler).on('logout', logoutHandler)
@@ -248,6 +255,7 @@ export const useApi = () => {
 
   return {
     isLoggedIn,
+    cookie,
     login: (personalNumber: string) => api.login(personalNumber),
     logout: () => api.logout(),
     on: (event: 'login' | 'logout', listener: () => any) => api.on(event, listener),
@@ -262,9 +270,6 @@ export const useChildList = createHook<Child[], []>(
 )
 export const useClassmates = createHook<Classmate[], [Child]>(
   'classmates', (child) => api.getClassmates(child), (child) => child.id, [],
-)
-export const useImage = createHook<Blob | null, [string]>(
-  'image', (imageUrl) => api.getImage(imageUrl), (imageUrl) => imageUrl, null,
 )
 export const useMenu = createHook<MenuItem[], [Child]>(
   'menu', (child) => api.getMenu(child), (child) => child.id, [],
