@@ -1,6 +1,6 @@
 {
   "name": "@skolplattformen/react-native-embedded-api",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "React Native wrapper for embedded-api",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
