@@ -1,9 +1,5 @@
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import React, { useEffect, useState } from 'react'
-import {
-  createStore, combineReducers, Action, Store,
-} from 'redux'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { DateTime } from 'luxon'
 import {
   CalendarItem,
@@ -15,179 +11,23 @@ import {
   ScheduleItem,
   User,
 } from '@skolplattformen/embedded-api/dist/types'
-import { SerializedError } from '@reduxjs/toolkit'
 import api from './api'
+import { ReloadableState, State } from './types'
+import { createAction, createSessionAction } from './actions'
+import store from './store'
 
-type EntityActionType = 'CALL_API' | 'CALL_CACHE' | 'UPDATE_FROM_API' | 'UPDATE_FROM_CACHE' | 'API_ERROR'
-interface EntityAction<T> extends Action<EntityActionType> {
-  entity: string
-  payload?: T
-  error?: Error
-  key: string
-}
-interface EntityActions<T, A extends any[]> {
-  getFromApi: (...args: A) => EntityAction<T>
-  getFromCache: (...args: A) => EntityAction<T>
-}
-interface Map<T> {
-  [key: string]: T
-}
-interface State<T> {
-  data?: T
-  status: 'pending' | 'loading' | 'loaded'
-  error?: SerializedError
-}
-interface ReloadableState<T> extends State<T> {
-  reload: () => Promise<void>
-}
-interface StateMap<T> extends Map<State<T>> { }
+interface ApiCall<T, A extends any[]> { (...args: A): Promise<T> }
+interface KeyFunc<A extends any[]> { (...args: A): string }
 
-const createEntityReducer = <T>(entity: string) => (
-  (state: StateMap<T> = {}, action: EntityAction<T>): StateMap<T> => {
-    if (action.entity !== entity) return state
-    const current = state[action.key] || { status: 'pending' }
-    switch (action.type) {
-      case 'CALL_API': {
-        return {
-          ...state,
-          [action.key]: {
-            ...current,
-            status: 'loading',
-            error: undefined,
-          },
-        }
-      }
-      case 'UPDATE_FROM_CACHE': {
-        return {
-          ...state,
-          [action.key]: {
-            ...current,
-            data: action.payload,
-          },
-        }
-      }
-      case 'UPDATE_FROM_API': {
-        return {
-          ...state,
-          [action.key]: {
-            ...current,
-            status: 'loaded',
-            data: action.payload,
-            error: undefined,
-          },
-        }
-      }
-      case 'API_ERROR': {
-        return {
-          ...state,
-          [action.key]: {
-            ...current,
-            status: 'pending',
-            error: {
-              name: action.error?.name,
-              message: action.error?.message,
-              stack: action.error?.stack,
-            },
-          },
-        }
-      }
-      default: return state
+// eslint-disable-next-line max-len
+const createEntityHook = <T, A extends any[]>(entity: string, apiCall: ApiCall<T, A>, keyFunc: KeyFunc<A>, empty: T) => (
+  (...args: A): ReloadableState<T> => {
+    const getState = (): State<T> => {
+      const state: any = store.getState()
+      return state[entity][keyFunc(...args)] || { status: 'pending', data: empty }
     }
-  }
-)
-const reducers = {
-  calendar: createEntityReducer<CalendarItem[]>('calendar'),
-  children: createEntityReducer<Child[]>('children'),
-  classmates: createEntityReducer<Classmate[]>('classmates'),
-  image: createEntityReducer<Blob>('image'),
-  menu: createEntityReducer<MenuItem[]>('menu'),
-  news: createEntityReducer<NewsItem[]>('news'),
-  notifications: createEntityReducer<Notification[]>('notifications'),
-  schedule: createEntityReducer<ScheduleItem[]>('schedule'),
-  user: createEntityReducer<User>('user'),
-}
-let store: Store
-export const rebuildStore = () => { store = createStore(combineReducers(reducers)) }
-rebuildStore()
 
-const createActions = <T, A extends any[]>(
-  entity: string,
-  apiCall: (...args: A) => Promise<T>,
-  keyFunc: (...args: A) => string,
-): EntityActions<T, A> => {
-  const getFromApi = (...args: A) => {
-    const key = keyFunc(...args)
-    const itemName = `${entity}_${key}`
-    apiCall(...args)
-      .then((res) => {
-        const action: EntityAction<T> = {
-          entity,
-          key,
-          type: 'UPDATE_FROM_API',
-          payload: res,
-        }
-        store.dispatch(action)
-        return res
-      })
-      .then((res) => AsyncStorage
-        .setItem(itemName, JSON.stringify(res))
-        .catch((err) => console.error(err)))
-      .catch((err) => {
-        const action: EntityAction<T> = {
-          entity,
-          key,
-          type: 'API_ERROR',
-          error: err,
-        }
-        store.dispatch(action)
-      })
-    const action: EntityAction<T> = {
-      entity,
-      key,
-      type: 'CALL_API',
-    }
-    return action
-  }
-  const getFromCache = (...args: A) => {
-    const key = keyFunc(...args)
-    const itemName = `${entity}_${key}`
-    AsyncStorage
-      .getItem(itemName)
-      .then((res) => {
-        if (!res) return
-        const data: T = JSON.parse(res)
-        const action: EntityAction<T> = {
-          entity,
-          key,
-          type: 'UPDATE_FROM_CACHE',
-          payload: data,
-        }
-        store.dispatch(action)
-      })
-      .catch((err) => console.error(err))
-
-    const action: EntityAction<T> = {
-      entity,
-      key,
-      type: 'CALL_CACHE',
-    }
-    return action
-  }
-  return { getFromApi, getFromCache }
-}
-
-const createHook = <T, A extends any[]>(
-  entity: string,
-  apiCall: (...args: A) => Promise<T>,
-  keyFunc: (...args: A) => string,
-  empty: T,
-) => (...args: A): ReloadableState<T> => {
     let isMounted = false
-
-    const getState = (): State<T> => (
-      store.getState()[entity][keyFunc(...args)] || { status: 'pending', data: empty }
-    )
-    const { getFromApi, getFromCache } = createActions<T, A>(entity, apiCall, keyFunc)
 
     const initial = getState()
     const [state, setState] = useState<State<T>>(initial)
@@ -205,19 +45,26 @@ const createHook = <T, A extends any[]>(
 
     // Load data from cache and API
     const reload = async (force = true) => {
-    // allready loading or done
+      // allready loading or done
       if (state.status === 'loading' || (state.status === 'loaded' && !force)) {
         return
       }
 
-      // first load
+      // first load - call cache
       if (state.status === 'pending') {
-        const action = getFromCache(...args)
+        const action = createAction<T>('CALL_CACHE', {
+          entity,
+          key: keyFunc(...args),
+        })
         store.dispatch(action)
       }
 
       // call api
-      const action = getFromApi(...args)
+      const action = createAction<T>('CALL_API', {
+        entity,
+        key: keyFunc(...args),
+        apiCall: () => apiCall(...args),
+      })
       store.dispatch(action)
     }
 
@@ -231,61 +78,75 @@ const createHook = <T, A extends any[]>(
 
     return { ...state, reload }
   }
+)
+
+api.on('login', () => store.dispatch(createSessionAction('LOGIN', { isFake: api.isFake })))
+api.on('logout', () => store.dispatch(createSessionAction('LOGOUT')))
 
 // Hooks
 export const useApi = () => {
+  let isMounted = false
   const [isLoggedIn, setIsLoggedIn] = useState(api.isLoggedIn)
+  const [isFake, setIsFake] = useState(api.isFake)
   const [cookie, setCookie] = useState(api.getSessionCookie())
 
-  const loginHandler = () => {
-    setIsLoggedIn(true)
-    setCookie(api.getSessionCookie())
-  }
-  const logoutHandler = () => {
-    setIsLoggedIn(false)
-    setCookie(undefined)
-  }
+  store.subscribe(() => {
+    if (!isMounted) return
+
+    const newState = store.getState().session
+    if (newState.isLoggedIn !== isLoggedIn) {
+      setIsLoggedIn(newState.isLoggedIn)
+    }
+    if (newState.isFake !== isFake) {
+      setIsFake(newState.isFake)
+    }
+    if (!newState.isFake) {
+      setCookie(newState.isLoggedIn ? api.getSessionCookie() : undefined)
+    }
+  })
 
   useEffect(() => {
-    api.on('login', loginHandler).on('logout', logoutHandler)
+    isMounted = true
     return () => {
-      api.off('login', loginHandler).off('logout', logoutHandler)
+      isMounted = false
     }
   }, [])
 
   return {
     isLoggedIn,
+    isFake,
     cookie,
     login: (personalNumber: string) => api.login(personalNumber),
     logout: () => api.logout(),
     on: (event: 'login' | 'logout', listener: () => any) => api.on(event, listener),
+    once: (event: 'login' | 'logout', listener: () => any) => api.once(event, listener),
     off: (event: 'login' | 'logout', listener: () => any) => api.off(event, listener),
   }
 }
-export const useCalendar = createHook<CalendarItem[], [Child]>(
+export const useCalendar = createEntityHook<CalendarItem[], [Child]>(
   'calendar', (child) => api.getCalendar(child), (child) => child.id, [],
 )
-export const useChildList = createHook<Child[], []>(
+export const useChildList = createEntityHook<Child[], []>(
   'children', () => api.getChildren(), () => 'all', [],
 )
-export const useClassmates = createHook<Classmate[], [Child]>(
+export const useClassmates = createEntityHook<Classmate[], [Child]>(
   'classmates', (child) => api.getClassmates(child), (child) => child.id, [],
 )
-export const useMenu = createHook<MenuItem[], [Child]>(
+export const useMenu = createEntityHook<MenuItem[], [Child]>(
   'menu', (child) => api.getMenu(child), (child) => child.id, [],
 )
-export const useNews = createHook<NewsItem[], [Child]>(
+export const useNews = createEntityHook<NewsItem[], [Child]>(
   'news', (child) => api.getNews(child), (child) => child.id, [],
 )
-export const useNotifications = createHook<Notification[], [Child]>(
+export const useNotifications = createEntityHook<Notification[], [Child]>(
   'notifications', (child) => api.getNotifications(child), (child) => child.id, [],
 )
-export const useSchedule = createHook<ScheduleItem[], [Child, DateTime, DateTime]>(
+export const useSchedule = createEntityHook<ScheduleItem[], [Child, DateTime, DateTime]>(
   'schedule',
   (child, from, to) => api.getSchedule(child, from, to),
   (child, from, to) => [child.id, from.toISODate(), to.toISODate()].join('_'),
   [],
 )
-export const useUser = createHook<User | null, []>(
+export const useUser = createEntityHook<User | null, []>(
   'user', () => api.getUser(), () => 'me', {},
 )

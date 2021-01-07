@@ -1,18 +1,38 @@
 import {
-  AsyncThunkAction, SerializedError, Slice, SliceCaseReducers,
+  Action, AsyncThunkAction, SerializedError, Slice, SliceCaseReducers, Dictionary,
 } from '@reduxjs/toolkit'
+
+// eslint-disable-next-line max-len
+export type EntityActionType = 'CALL_API' | 'UPDATE_FROM_API' | 'CALL_CACHE' | 'UPDATE_FROM_CACHE' | 'API_ERROR'
+
+export interface ApiState {
+  isFake: boolean
+}
+export interface DataAction<T> extends Action<string> {
+  data?: T
+}
+export interface EntityActionData<T> {
+  entity: string
+  key: string
+  payload?: T | SerializedError
+  apiCall?: () => Promise<T>
+}
+export interface EntityAction<T> extends EntityActionData<T>, Action<EntityActionType | string> { }
 
 export interface State<T> {
   data?: T
   status: 'pending' | 'loading' | 'loaded'
   error?: SerializedError
 }
-
-export interface Map<T> {
-  [key: string]: T
+export interface ReloadableState<T> extends State<T> {
+  reload: () => Promise<void>
 }
+export interface StateDictionary<T> extends Dictionary<State<T>> { }
 
-export interface StateMap<T> extends Map<State<T>> { }
+export interface Session {
+  isLoggedIn: boolean
+  isFake: boolean
+}
 
 export interface ArgsToKey<T extends any[]> {
   (...args: T): string
@@ -33,13 +53,9 @@ export interface ThunkCall<R, A extends any[]> {
 
 export interface Part<R, A extends any[]> {
   thunk: ThunkCall<R, A>
-  slice: Slice<Map<State<R>>, SliceCaseReducers<Map<State<R>>>>
+  slice: Slice<Dictionary<State<R>>, SliceCaseReducers<Dictionary<State<R>>>>
   argsToKey: ArgsToKey<A>
   initialState: State<R>
-}
-
-export interface ReloadableState<T> extends State<T> {
-  reload: () => Promise<void>
 }
 
 export interface Hook<R, A extends any[]> {

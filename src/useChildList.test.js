@@ -1,23 +1,19 @@
 import { renderHook, act } from '@testing-library/react-hooks'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import api from './api'
-import { rebuildStore, useChildList } from './hooks'
-
-jest.mock('./api', () => ({
-  getChildren: jest.fn(),
-}))
+import { useChildList } from './hooks'
+import { clearStore } from './store'
 
 describe('useChildList', () => {
-  const response = [{ id: '2' }]
+  let resolve
+  let reject
   beforeEach(() => {
-    api.getChildren.mockReturnValue(new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (response instanceof Error) reject(response)
-        else resolve(response)
-      }, 20)
+    api.getChildren.mockReturnValue(new Promise((_resolve, _reject) => {
+      resolve = _resolve
+      reject = _reject
     }))
   })
-  afterEach(() => rebuildStore())
+  afterEach(() => { act(clearStore) })
   it('data defaults to empty array', async () => {
     await act(async () => {
       const { result, waitForNextUpdate } = renderHook(() => useChildList())
@@ -48,6 +44,9 @@ describe('useChildList', () => {
       const { result, waitForNextUpdate } = renderHook(() => useChildList())
       await waitForNextUpdate()
       await waitForNextUpdate()
+
+      const response = { id: '2' }
+      resolve(response)
       await waitForNextUpdate()
 
       const { data } = result.current
@@ -62,6 +61,9 @@ describe('useChildList', () => {
       const { waitForNextUpdate } = renderHook(() => useChildList())
       await waitForNextUpdate()
       await waitForNextUpdate()
+
+      const response = { id: '2' }
+      resolve(response)
       await waitForNextUpdate()
 
       const data = JSON.parse(await AsyncStorage.getItem('children_all'))
@@ -89,15 +91,29 @@ describe('useChildList', () => {
   })
   it('only calls api.getChildren once', async () => {
     await act(async () => {
-      const { waitForNextUpdate: wait1 } = renderHook(() => useChildList())
-      const { waitForNextUpdate: wait2 } = renderHook(() => useChildList())
+      renderHook(() => useChildList())
+      renderHook(() => useChildList())
 
-      await wait1()
-      await wait1()
-      await wait2()
-      await wait2()
+      await new Promise((r) => setTimeout(r, 50))
 
       expect(api.getChildren).toHaveBeenCalledWith()
+    })
+  })
+  it('handles api load error', async () => {
+    const cachedItems = [{ id: '1' }]
+    await AsyncStorage.setItem('children_all', JSON.stringify(cachedItems))
+
+    await act(async () => {
+      const { result, waitForNextUpdate } = renderHook(() => useChildList())
+      await waitForNextUpdate()
+      await waitForNextUpdate()
+
+      const err = new Error('message')
+      reject(err)
+      await waitForNextUpdate()
+
+      const { error } = result.current
+      expect(error.message).toEqual(err.message)
     })
   })
 })

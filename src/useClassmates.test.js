@@ -1,23 +1,19 @@
 import { renderHook, act } from '@testing-library/react-hooks'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import api from './api'
-import { useClassmates, rebuildStore } from './hooks'
-
-jest.mock('./api', () => ({
-  getClassmates: jest.fn(),
-}))
+import { useClassmates } from './hooks'
+import { clearStore } from './store'
 
 describe('useClassmates', () => {
-  const response = [{ id: '2' }]
+  let resolve
+  let reject
   beforeEach(() => {
-    api.getClassmates.mockReturnValue(new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (response instanceof Error) reject(response)
-        else resolve(response)
-      }, 20)
+    api.getClassmates.mockReturnValue(new Promise((_resolve, _reject) => {
+      resolve = _resolve
+      reject = _reject
     }))
   })
-  afterEach(() => rebuildStore())
+  afterEach(() => { act(clearStore) })
   const child = { id: 'id' }
   it('data defaults to empty array', async () => {
     await act(async () => {
@@ -49,6 +45,9 @@ describe('useClassmates', () => {
       const { result, waitForNextUpdate } = renderHook(() => useClassmates(child))
       await waitForNextUpdate()
       await waitForNextUpdate()
+
+      const response = { id: '2' }
+      resolve(response)
       await waitForNextUpdate()
 
       const { data } = result.current
@@ -63,6 +62,9 @@ describe('useClassmates', () => {
       const { waitForNextUpdate } = renderHook(() => useClassmates(child))
       await waitForNextUpdate()
       await waitForNextUpdate()
+
+      const response = { id: '2' }
+      resolve(response)
       await waitForNextUpdate()
 
       const data = JSON.parse(await AsyncStorage.getItem('classmates_id'))
@@ -90,15 +92,29 @@ describe('useClassmates', () => {
   })
   it('only calls api.getClassmates once', async () => {
     await act(async () => {
-      const { waitForNextUpdate: wait1 } = renderHook(() => useClassmates(child))
-      const { waitForNextUpdate: wait2 } = renderHook(() => useClassmates(child))
+      renderHook(() => useClassmates(child))
+      renderHook(() => useClassmates(child))
 
-      await wait1()
-      await wait1()
-      await wait2()
-      await wait2()
+      await new Promise((r) => setTimeout(r, 50))
 
       expect(api.getClassmates).toHaveBeenCalledTimes(1)
+    })
+  })
+  it('handles api load error', async () => {
+    const cachedItems = [{ id: '1' }]
+    await AsyncStorage.setItem('classmates_id', JSON.stringify(cachedItems))
+
+    await act(async () => {
+      const { result, waitForNextUpdate } = renderHook(() => useClassmates(child))
+      await waitForNextUpdate()
+      await waitForNextUpdate()
+
+      const err = new Error('message')
+      reject(err)
+      await waitForNextUpdate()
+
+      const { error } = result.current
+      expect(error.message).toEqual(err.message)
     })
   })
 })

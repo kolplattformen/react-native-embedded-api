@@ -2,23 +2,19 @@ import { renderHook, act } from '@testing-library/react-hooks'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { DateTime } from 'luxon'
 import api from './api'
-import { useSchedule, rebuildStore } from './hooks'
-
-jest.mock('./api', () => ({
-  getSchedule: jest.fn(),
-}))
+import { useSchedule } from './hooks'
+import { clearStore } from './store'
 
 describe('useSchedule', () => {
-  const response = [{ id: '2' }]
+  let resolve
+  let reject
   beforeEach(() => {
-    api.getSchedule.mockReturnValue(new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (response instanceof Error) reject(response)
-        else resolve(response)
-      }, 20)
+    api.getSchedule.mockReturnValue(new Promise((_resolve, _reject) => {
+      resolve = _resolve
+      reject = _reject
     }))
   })
-  afterEach(() => rebuildStore())
+  afterEach(() => { act(clearStore) })
   const child = { id: 'id' }
   const from = DateTime.fromISO('2021-01-01')
   const to = DateTime.fromISO('2021-01-08')
@@ -52,6 +48,9 @@ describe('useSchedule', () => {
       const { result, waitForNextUpdate } = renderHook(() => useSchedule(child, from, to))
       await waitForNextUpdate()
       await waitForNextUpdate()
+
+      const response = { id: '2' }
+      resolve(response)
       await waitForNextUpdate()
 
       const { data } = result.current
@@ -66,6 +65,9 @@ describe('useSchedule', () => {
       const { waitForNextUpdate } = renderHook(() => useSchedule(child, from, to))
       await waitForNextUpdate()
       await waitForNextUpdate()
+
+      const response = { id: '2' }
+      resolve(response)
       await waitForNextUpdate()
 
       const data = JSON.parse(await AsyncStorage.getItem('schedule_id_2021-01-01_2021-01-08'))
@@ -93,15 +95,29 @@ describe('useSchedule', () => {
   })
   it('only calls api.getSchedule once', async () => {
     await act(async () => {
-      const { waitForNextUpdate: wait1 } = renderHook(() => useSchedule(child, from, to))
-      const { waitForNextUpdate: wait2 } = renderHook(() => useSchedule(child, from, to))
+      renderHook(() => useSchedule(child, from, to))
+      renderHook(() => useSchedule(child, from, to))
 
-      await wait1()
-      await wait1()
-      await wait2()
-      await wait2()
+      await new Promise((r) => setTimeout(r, 50))
 
       expect(api.getSchedule).toHaveBeenCalledTimes(1)
+    })
+  })
+  it('handles api load error', async () => {
+    const cachedItems = [{ id: '1' }]
+    await AsyncStorage.setItem('schedule_id_2021-01-01_2021-01-08', JSON.stringify(cachedItems))
+
+    await act(async () => {
+      const { result, waitForNextUpdate } = renderHook(() => useSchedule(child, from, to))
+      await waitForNextUpdate()
+      await waitForNextUpdate()
+
+      const err = new Error('message')
+      reject(err)
+      await waitForNextUpdate()
+
+      const { error } = result.current
+      expect(error.message).toEqual(err.message)
     })
   })
 })

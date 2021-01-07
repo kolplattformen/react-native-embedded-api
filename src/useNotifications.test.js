@@ -1,24 +1,21 @@
 import { renderHook, act } from '@testing-library/react-hooks'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import api from './api'
-import { useNotifications, rebuildStore } from './hooks'
+import { useNotifications } from './hooks'
+import { clearStore } from './store'
 
-jest.mock('./api', () => ({
-  getNotifications: jest.fn(),
-}))
+const child = { id: 'id' }
 
 describe('useNotifications', () => {
-  const response = [{ id: '2' }]
+  let resolve
+  let reject
   beforeEach(() => {
-    api.getNotifications.mockReturnValue(new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (response instanceof Error) reject(response)
-        else resolve(response)
-      }, 20)
+    api.getNotifications.mockReturnValue(new Promise((_resolve, _reject) => {
+      resolve = _resolve
+      reject = _reject
     }))
   })
-  afterEach(() => rebuildStore())
-  const child = { id: 'id' }
+  afterEach(() => { act(clearStore) })
   it('data defaults to empty array', async () => {
     await act(async () => {
       const { result, waitForNextUpdate } = renderHook(() => useNotifications(child))
@@ -49,6 +46,9 @@ describe('useNotifications', () => {
       const { result, waitForNextUpdate } = renderHook(() => useNotifications(child))
       await waitForNextUpdate()
       await waitForNextUpdate()
+
+      const response = [{ id: '2' }]
+      resolve(response)
       await waitForNextUpdate()
 
       const { data } = result.current
@@ -63,6 +63,9 @@ describe('useNotifications', () => {
       const { waitForNextUpdate } = renderHook(() => useNotifications(child))
       await waitForNextUpdate()
       await waitForNextUpdate()
+
+      const response = [{ id: '2' }]
+      resolve(response)
       await waitForNextUpdate()
 
       const data = JSON.parse(await AsyncStorage.getItem('notifications_id'))
@@ -90,15 +93,29 @@ describe('useNotifications', () => {
   })
   it('only calls api.getNotifications once', async () => {
     await act(async () => {
-      const { waitForNextUpdate: wait1 } = renderHook(() => useNotifications(child))
-      const { waitForNextUpdate: wait2 } = renderHook(() => useNotifications(child))
+      renderHook(() => useNotifications(child))
+      renderHook(() => useNotifications(child))
 
-      await wait1()
-      await wait1()
-      await wait2()
-      await wait2()
+      await new Promise((r) => setTimeout(r, 50))
 
       expect(api.getNotifications).toHaveBeenCalledTimes(1)
+    })
+  })
+  it('handles api load error', async () => {
+    const cachedItems = [{ id: '1' }]
+    await AsyncStorage.setItem('notifications_id', JSON.stringify(cachedItems))
+
+    await act(async () => {
+      const { result, waitForNextUpdate } = renderHook(() => useNotifications(child))
+      await waitForNextUpdate()
+      await waitForNextUpdate()
+
+      const err = new Error('message')
+      reject(err)
+      await waitForNextUpdate()
+
+      const { error } = result.current
+      expect(error.message).toEqual(err.message)
     })
   })
 })
