@@ -12,17 +12,22 @@ export const entityMiddleware: Middleware<any, any, Dispatch<AnyAction>> = (api)
           if (action.apiCall) {
             action.apiCall()
               .then((res) => {
+                // Call API
                 const updateAction = createAction<any>('UPDATE_FROM_API', {
                   entity: action.entity,
                   key: action.key,
                   payload: res,
                 })
                 dispatch(updateAction)
-                const cacheKey = `${action.entity}_${action.key}`
-                const cacheContent = JSON.stringify(res)
-                AsyncStorage
-                  .setItem(cacheKey, cacheContent)
-                  .catch(() => { })
+
+                // Read from cache (not in fake mode)
+                if (!api.getState()?.session?.isFake) {
+                  const cacheKey = `${action.entity}_${action.key}`
+                  const cacheContent = JSON.stringify(res)
+                  AsyncStorage
+                    .setItem(cacheKey, cacheContent)
+                    .catch(() => { })
+                }
               })
               .catch((err) => {
                 const errorAction = createAction<any>('API_ERROR', {
@@ -35,17 +40,20 @@ export const entityMiddleware: Middleware<any, any, Dispatch<AnyAction>> = (api)
           }
           break
         case 'CALL_CACHE':
-          AsyncStorage.getItem(`${action.entity}_${action.key}`)
-            .then((res) => {
-              if (res) {
-                const updateAction = createAction<any>('UPDATE_FROM_CACHE', {
-                  entity: action.entity,
-                  key: action.key,
-                  payload: JSON.parse(res),
-                })
-                dispatch(updateAction)
-              }
-            })
+          // Not in fake mode
+          if (!api.getState()?.session?.isFake) {
+            AsyncStorage.getItem(`${action.entity}_${action.key}`)
+              .then((res) => {
+                if (res) {
+                  const updateAction = createAction<any>('UPDATE_FROM_CACHE', {
+                    entity: action.entity,
+                    key: action.key,
+                    payload: JSON.parse(res),
+                  })
+                  dispatch(updateAction)
+                }
+              })
+          }
           break
         case 'LOGOUT':
           dispatch({ type: 'CLEAR' })
