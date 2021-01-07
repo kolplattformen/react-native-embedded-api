@@ -1,5 +1,11 @@
 # @skolplattformen/react-native-embedded-api
 
+1. [Installing](#installing)
+1. [Login / logout](#login--logout)
+1. [Get data](#get-data)
+1. [Fake mode](#fake-mode)
+
+
 ## Installing
 
 ```npm i -S @skolplattformen/react-native-embedded-api```
@@ -22,7 +28,9 @@ export default function LoginController () {
 
   const doLogin = async () => {
     const status = await login(personalNumber)
-    // open BankID using status.token
+
+    openBankID(status.token)
+
     status.on('PENDING', () => { setBankIdStatus('BankID app not yet opened') })
     status.on('USER_SIGN', () => { setBankIdStatus('BankID app is open') })
     status.on('OK', () => { setBankIdStatus('BankID signed. NOTE! User is NOT yet logged in!') })
@@ -42,15 +50,15 @@ export default function LoginController () {
 
 ## Get data
 
-1. [General](#General)
-1. [useCalendar](#useCalendar)
-1. [useChildList](#useChildList)
-1. [useClassmates](#useClassmates)
-1. [useMenu](#useMenu)
-1. [useNews](#useNews)
-1. [useNotifications](#useNotifications)
-1. [useSchedule](#useSchedule)
-1. [useUser](#useUser)
+1. [General](#general)
+1. [useCalendar](#usecalendar)
+1. [useChildList](#usechildList)
+1. [useClassmates](#useclassmates)
+1. [useMenu](#usemenu)
+1. [useNews](#usenews)
+1. [useNotifications](#usenotifications)
+1. [useSchedule](#useschedule)
+1. [useUser](#useuser)
 
 ### General
 
@@ -274,6 +282,49 @@ export default function UserComponent () => {
         </>
       }
       { status !== 'loading' && status !== 'pending' && <Button onClick={() => reload()}> }
+    </View>
+  )
+}
+```
+
+## Fake mode
+
+To make testing easier, fake mode can be enabled at login. Just use the magic personal number
+**12121212121212**. The returned login status will have `token` set to `'fake'`.
+
+```javascript
+import { useApi } from '@skolplattformen/react-native-embedded-api'
+
+
+import { useApi } from '@skolplattformen/react-native-embedded-api'
+
+export default function LoginController () {
+  const { login, logout, on, isLoggedIn } = useApi()
+
+  const [personalNumber, setPersonalNumber] = useState()
+  const [bankIdStatus, setBankIdStatus] = useState('')
+
+  on('login', () => { /* do login stuff */ })
+  on('logout', () => { /* do logout stuff */ })
+
+  const doLogin = async () => {
+    const status = await login(personalNumber)
+
+    if (status.token !== 'fake') {
+      openBankID(status.token)
+    } else {
+      // Login will succeed
+      // All data will be faked
+      // No server calls will be made
+    }
+  })
+
+  return (
+    <View>
+      <Input value={personalNumber} onChange={(value) = setPersonalNumber(value)} />
+      <Button onClick={() => doLogin()}>
+      <Text>{bankIdStatus}</Text>
+      <Text>Logged in: {isLoggedIn}</Text>
     </View>
   )
 }
