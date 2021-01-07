@@ -1,28 +1,18 @@
 import { renderHook, act } from '@testing-library/react-hooks'
-import { EventEmitter } from 'events'
 import api from './api'
 import { useApi } from './hooks'
-
-jest.mock('./api', () => ({
-  isLoggedIn: false,
-  login: jest.fn(),
-  logout: jest.fn(),
-  on: jest.fn(),
-  off: jest.fn(),
-  getSessionCookie: jest.fn(),
-}))
+import { clearStore } from './store'
 
 describe('useApi', () => {
   let status
   let emitter
   beforeEach(() => {
-    emitter = new EventEmitter()
+    emitter = api.emitter
     status = {}
     api.login.mockResolvedValue(status)
-    api.on.mockImplementation((...args) => emitter.on(...args))
-    api.off.mockImplementation((...args) => emitter.on(...args))
     api.getSessionCookie.mockReturnValue(undefined)
   })
+  afterEach(() => { act(clearStore) })
   describe('#login', () => {
     it('calls through to login', () => {
       const { result } = renderHook(() => useApi())
@@ -34,9 +24,9 @@ describe('useApi', () => {
     it('returns the status checker', async () => {
       const { result } = renderHook(() => useApi())
       const { login } = result.current
-      const _status = await login('pnr')
+      const loginStatus = await login('pnr')
 
-      expect(_status).toEqual(status)
+      expect(loginStatus).toEqual(status)
     })
     it('rejects if login fails', async () => {
       const error = new Error()
@@ -88,7 +78,6 @@ describe('useApi', () => {
       })
     })
   })
-
   describe('.cookie', () => {
     it('defaults to undefined', () => {
       const { result } = renderHook(() => useApi())
@@ -96,7 +85,7 @@ describe('useApi', () => {
 
       expect(cookie).toEqual(undefined)
     })
-    it('defaults to true if session cookie exists', () => {
+    it('defaults to cookie if session cookie exists', () => {
       api.getSessionCookie.mockReturnValue('cookie')
 
       const { result } = renderHook(() => useApi())
