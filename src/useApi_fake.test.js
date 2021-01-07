@@ -1,3 +1,4 @@
+import AsyncStorage from '@react-native-async-storage/async-storage'
 import { act, renderHook } from '@testing-library/react-hooks'
 import api from './api'
 import { useApi, useChildList, useUser } from './hooks'
@@ -63,6 +64,42 @@ describe('useApi - fake mode', () => {
       const { result: childResult, waitForNextUpdate: waitChildren } = renderHook(() => useChildList())
       await waitChildren()
       expect(childResult.current.data).toHaveLength(2)
+    })
+  })
+  it('does not load from cache', async () => {
+    await act(async () => {
+      const spy = jest.spyOn(AsyncStorage, 'getItem')
+
+      const { result: apiResult, waitForNextUpdate: waitApi } = renderHook(() => useApi())
+      await waitApi()
+
+      const { login } = apiResult.current
+      login(pnr)
+      await waitApi()
+
+      const { waitForNextUpdate: waitUser } = renderHook(() => useUser())
+      await waitUser()
+      expect(AsyncStorage.getItem).not.toHaveBeenCalled()
+
+      spy.mockRestore()
+    })
+  })
+  it('does not store in cache', async () => {
+    await act(async () => {
+      const spy = jest.spyOn(AsyncStorage, 'setItem')
+
+      const { result: apiResult, waitForNextUpdate: waitApi } = renderHook(() => useApi())
+      await waitApi()
+
+      const { login } = apiResult.current
+      login(pnr)
+      await waitApi()
+
+      const { waitForNextUpdate: waitUser } = renderHook(() => useUser())
+      await waitUser()
+      expect(AsyncStorage.setItem).not.toHaveBeenCalled()
+
+      spy.mockRestore()
     })
   })
 })
