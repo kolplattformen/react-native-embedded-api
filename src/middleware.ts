@@ -1,10 +1,11 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { AnyAction, Dispatch, Middleware } from 'redux'
 import { createAction } from './actions'
+import api from './api'
 import { EntityAction } from './types'
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const entityMiddleware: Middleware<any, any, Dispatch<AnyAction>> = (api) => (
+export const entityMiddleware: Middleware<any, any, Dispatch<AnyAction>> = () => (
   (dispatch) => (
     (action: EntityAction<any>) => {
       switch (action.type) {
@@ -21,7 +22,7 @@ export const entityMiddleware: Middleware<any, any, Dispatch<AnyAction>> = (api)
                 dispatch(updateAction)
 
                 // Read from cache (not in fake mode)
-                if (!api.getState()?.session?.isFake) {
+                if (!api.isFake) {
                   const cacheKey = `${action.entity}_${action.key}`
                   const cacheContent = JSON.stringify(res)
                   AsyncStorage
@@ -41,7 +42,7 @@ export const entityMiddleware: Middleware<any, any, Dispatch<AnyAction>> = (api)
           break
         case 'CALL_CACHE':
           // Not in fake mode
-          if (!api.getState()?.session?.isFake) {
+          if (!api.isFake) {
             AsyncStorage.getItem(`${action.entity}_${action.key}`)
               .then((res) => {
                 if (res) {

@@ -2,12 +2,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage'
 import { act, renderHook } from '@testing-library/react-hooks'
 import api from './api'
 import { useApi, useChildList, useUser } from './hooks'
+import { clearStore } from './store'
 
 jest.mock('@skolplattformen/embedded-api',
   () => jest.requireActual('@skolplattformen/embedded-api'))
 
 describe('useApi - fake mode', () => {
-  afterEach(() => act(() => api.logout()))
+  afterEach(async () => {
+    api.isLoggedIn = false
+    api.isFake = false
+  })
   const pnr = '121212121212'
   it('status.token is "fake"', async () => {
     await act(async () => {
@@ -25,10 +29,8 @@ describe('useApi - fake mode', () => {
       const { result, waitForNextUpdate } = renderHook(() => useApi())
       await waitForNextUpdate()
 
-      expect(result.current.isLoggedIn).toEqual(false)
-
       const { login } = result.current
-      login(pnr)
+      await login(pnr)
       await waitForNextUpdate()
 
       expect(result.current.isLoggedIn).toEqual(true)
@@ -38,11 +40,10 @@ describe('useApi - fake mode', () => {
     await act(async () => {
       const { result, waitForNextUpdate } = renderHook(() => useApi())
       await waitForNextUpdate()
-
       expect(result.current.isFake).toEqual(false)
 
       const { login } = result.current
-      login(pnr)
+      await login(pnr)
       await waitForNextUpdate()
 
       expect(result.current.isFake).toEqual(true)
@@ -54,7 +55,7 @@ describe('useApi - fake mode', () => {
       await waitApi()
 
       const { login } = apiResult.current
-      login(pnr)
+      await login(pnr)
       await waitApi()
 
       const { result: userResult, waitForNextUpdate: waitUser } = renderHook(() => useUser())
@@ -74,11 +75,10 @@ describe('useApi - fake mode', () => {
       await waitApi()
 
       const { login } = apiResult.current
-      login(pnr)
-      await waitApi()
+      await login(pnr)
 
-      const { waitForNextUpdate: waitUser } = renderHook(() => useUser())
-      await waitUser()
+      renderHook(() => useUser())
+      await new Promise((res) => setTimeout(res, 50))
       expect(AsyncStorage.getItem).not.toHaveBeenCalled()
 
       spy.mockRestore()
@@ -92,11 +92,10 @@ describe('useApi - fake mode', () => {
       await waitApi()
 
       const { login } = apiResult.current
-      login(pnr)
-      await waitApi()
+      await login(pnr)
 
-      const { waitForNextUpdate: waitUser } = renderHook(() => useUser())
-      await waitUser()
+      renderHook(() => useUser())
+      await new Promise((res) => setTimeout(res, 50))
       expect(AsyncStorage.setItem).not.toHaveBeenCalled()
 
       spy.mockRestore()

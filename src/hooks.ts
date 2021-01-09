@@ -13,7 +13,7 @@ import {
 } from '@skolplattformen/embedded-api/dist/types'
 import api from './api'
 import { ReloadableState, State } from './types'
-import { createAction, createSessionAction } from './actions'
+import { createAction } from './actions'
 import store from './store'
 
 interface ApiCall<T, A extends any[]> { (...args: A): Promise<T> }
@@ -27,14 +27,14 @@ const createEntityHook = <T, A extends any[]>(entity: string, apiCall: ApiCall<T
       return state[entity][keyFunc(...args)] || { status: 'pending', data: empty }
     }
 
-    let isMounted = false
+    let mounted = false
 
     const initial = getState()
     const [state, setState] = useState<State<T>>(initial)
 
     // Listen for changes in the store
     store.subscribe(() => {
-      if (!isMounted) return
+      if (!mounted) return
 
       const newState = getState()
       if (newState && JSON.stringify(state) !== JSON.stringify(newState)) {
@@ -45,6 +45,9 @@ const createEntityHook = <T, A extends any[]>(entity: string, apiCall: ApiCall<T
 
     // Load data from cache and API
     const reload = async (force = true) => {
+      // not logged in
+      if (!api.isLoggedIn) return
+
       // allready loading or done
       if (state.status === 'loading' || (state.status === 'loaded' && !force)) {
         return
@@ -68,11 +71,25 @@ const createEntityHook = <T, A extends any[]>(entity: string, apiCall: ApiCall<T
       store.dispatch(action)
     }
 
+    const sessionListener = () => {
+      if (!mounted) return
+      if (api.isLoggedIn) {
+        reload(false)
+      } else {
+        setState({ status: 'pending', data: empty })
+      }
+    }
+
     useEffect(() => {
-      isMounted = true
-      reload(false)
+      mounted = true
+      api.on('login', sessionListener)
+      api.on('logout', sessionListener)
+
+      if (api.isLoggedIn) reload(false)
       return () => {
-        isMounted = false
+        mounted = false
+        api.off('login', sessionListener)
+        api.off('logout', sessionListener)
       }
     }, args)
 
@@ -80,35 +97,31 @@ const createEntityHook = <T, A extends any[]>(entity: string, apiCall: ApiCall<T
   }
 )
 
-api.on('login', () => store.dispatch(createSessionAction('LOGIN', { isFake: api.isFake })))
-api.on('logout', () => store.dispatch(createSessionAction('LOGOUT')))
-
 // Hooks
 export const useApi = () => {
-  let isMounted = false
+  let mounted = false
   const [isLoggedIn, setIsLoggedIn] = useState(api.isLoggedIn)
   const [isFake, setIsFake] = useState(api.isFake)
   const [cookie, setCookie] = useState(api.getSessionCookie())
 
-  store.subscribe(() => {
-    if (!isMounted) return
-
-    const newState = store.getState().session
-    if (newState.isLoggedIn !== isLoggedIn) {
-      setIsLoggedIn(newState.isLoggedIn)
+  const sessionListener = () => {
+    if (!mounted) return
+    setIsLoggedIn(api.isLoggedIn)
+    setIsFake(api.isFake)
+    if (!api.isFake) {
+      setCookie(api.isLoggedIn ? api.getSessionCookie() : undefined)
     }
-    if (newState.isFake !== isFake) {
-      setIsFake(newState.isFake)
-    }
-    if (!newState.isFake) {
-      setCookie(newState.isLoggedIn ? api.getSessionCookie() : undefined)
-    }
-  })
+  }
 
   useEffect(() => {
-    isMounted = true
+    mounted = true
+    api.on('login', sessionListener)
+    api.on('logout', sessionListener)
+
     return () => {
-      isMounted = false
+      mounted = false
+      api.off('login', sessionListener)
+      api.off('logout', sessionListener)
     }
   }, [])
 

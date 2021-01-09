@@ -8,6 +8,7 @@ describe('useChildList', () => {
   let resolve
   let reject
   beforeEach(() => {
+    api.isLoggedIn = true
     api.getChildren.mockReturnValue(new Promise((_resolve, _reject) => {
       resolve = _resolve
       reject = _reject

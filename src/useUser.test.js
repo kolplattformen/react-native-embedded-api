@@ -8,6 +8,7 @@ describe('useUser', () => {
   let resolve
   let reject
   beforeEach(() => {
+    api.isLoggedIn = true
     api.getUser.mockReturnValue(new Promise((_resolve, _reject) => {
       resolve = _resolve
       reject = _reject

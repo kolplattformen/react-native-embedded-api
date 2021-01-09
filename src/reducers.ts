@@ -1,18 +1,7 @@
 import { SerializedError } from '@reduxjs/toolkit'
 import {
-  ApiState, DataAction, EntityAction, Session, StateDictionary,
+  EntityAction, StateDictionary,
 } from './types'
-
-export const createSessionReducer = () => (
-  (state: Session = { isLoggedIn: false, isFake: false }, action: DataAction<ApiState>): Session => {
-    switch (action.type) {
-      case 'LOGIN': return { ...state, isLoggedIn: true, isFake: action.data?.isFake || false }
-      case 'LOGOUT': return { ...state, isLoggedIn: false, isFake: false }
-      case 'CLEAR': return { isLoggedIn: false, isFake: false }
-      default: return state
-    }
-  }
-)
 
 export const createEntityReducer = <T>(entity: string) => (
   (state: StateDictionary<T> = {}, action: EntityAction<T>): StateDictionary<T> => {

@@ -4,11 +4,10 @@ import {
 import {
   applyMiddleware, combineReducers, createStore,
 } from 'redux'
-import { createEntityReducer, createSessionReducer } from './reducers'
+import { createEntityReducer } from './reducers'
 import { entityMiddleware } from './middleware'
 
 const createReducers = () => combineReducers({
-  session: createSessionReducer(),
   calendar: createEntityReducer<CalendarItem[]>('calendar'),
   children: createEntityReducer<Child[]>('children'),
   classmates: createEntityReducer<Classmate[]>('classmates'),
