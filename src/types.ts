@@ -5,12 +5,6 @@ import {
 // eslint-disable-next-line max-len
 export type EntityActionType = 'CALL_API' | 'UPDATE_FROM_API' | 'CALL_CACHE' | 'UPDATE_FROM_CACHE' | 'API_ERROR'
 
-export interface ApiState {
-  isFake: boolean
-}
-export interface DataAction<T> extends Action<string> {
-  data?: T
-}
 export interface EntityActionData<T> {
   entity: string
   key: string

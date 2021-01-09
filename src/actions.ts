@@ -1,5 +1,5 @@
 import {
-  DataAction, EntityAction, EntityActionData, EntityActionType, ApiState,
+  EntityAction, EntityActionData, EntityActionType,
 } from './types'
 
 export const createAction = <T>(type: EntityActionType, data: EntityActionData<T>): EntityAction<T> => ({
