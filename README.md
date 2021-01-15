@@ -289,8 +289,9 @@ export default function UserComponent () => {
 
 ## Fake mode
 
-To make testing easier, fake mode can be enabled at login. Just use the magic personal number
-**12121212121212**. The returned login status will have `token` set to `'fake'`.
+To make testing easier, fake mode can be enabled at login. Just use any of the magic
+personal numbers: `12121212121212`, `201212121212` or `1212121212`.
+The returned login status will have `token` set to `'fake'`.
 
 ```javascript
 import { useApi } from '@skolplattformen/react-native-embedded-api'
