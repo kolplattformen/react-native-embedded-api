@@ -140,7 +140,7 @@ export const useCalendar = createEntityHook<CalendarItem[], [Child]>(
   'calendar', (child) => api.getCalendar(child), (child) => child.id, [],
 )
 export const useChildList = createEntityHook<Child[], []>(
-  'children', () => api.getChildren(), () => 'all', [],
+  'children', () => api.getChildren(), () => api.getPersonalNumber() || '', [],
 )
 export const useClassmates = createEntityHook<Classmate[], [Child]>(
   'classmates', (child) => api.getClassmates(child), (child) => child.id, [],
@@ -161,5 +161,5 @@ export const useSchedule = createEntityHook<ScheduleItem[], [Child, DateTime, Da
   [],
 )
 export const useUser = createEntityHook<User | null, []>(
-  'user', () => api.getUser(), () => 'me', {},
+  'user', () => api.getUser(), () => api.getPersonalNumber() || '', {},
 )

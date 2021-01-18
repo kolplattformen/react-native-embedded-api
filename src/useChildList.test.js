@@ -9,6 +9,7 @@ describe('useChildList', () => {
   let reject
   beforeEach(() => {
     api.isLoggedIn = true
+    api.getPersonalNumber.mockReturnValue('pnr')
     api.getChildren.mockReturnValue(new Promise((_resolve, _reject) => {
       resolve = _resolve
       reject = _reject
@@ -26,7 +27,7 @@ describe('useChildList', () => {
   })
   it('data returns contents of async storage', async () => {
     const cached = [{ id: '1' }]
-    await AsyncStorage.setItem('children_all', JSON.stringify(cached))
+    await AsyncStorage.setItem('children_pnr', JSON.stringify(cached))
 
     await act(async () => {
       const { result, waitForNextUpdate } = renderHook(() => useChildList())
@@ -39,7 +40,7 @@ describe('useChildList', () => {
   })
   it('data changes to contents of api on load', async () => {
     const cachedChildren = [{ id: '1' }]
-    await AsyncStorage.setItem('children_all', JSON.stringify(cachedChildren))
+    await AsyncStorage.setItem('children_pnr', JSON.stringify(cachedChildren))
 
     await act(async () => {
       const { result, waitForNextUpdate } = renderHook(() => useChildList())
@@ -56,7 +57,7 @@ describe('useChildList', () => {
   })
   it('stores contents of api in cache', async () => {
     const cachedChildren = [{ id: '1' }]
-    await AsyncStorage.setItem('children_all', JSON.stringify(cachedChildren))
+    await AsyncStorage.setItem('children_pnr', JSON.stringify(cachedChildren))
 
     await act(async () => {
       const { waitForNextUpdate } = renderHook(() => useChildList())
@@ -67,7 +68,7 @@ describe('useChildList', () => {
       resolve(response)
       await waitForNextUpdate()
 
-      const data = JSON.parse(await AsyncStorage.getItem('children_all'))
+      const data = JSON.parse(await AsyncStorage.getItem('children_pnr'))
       expect(data).toEqual(response)
     })
   })
@@ -102,7 +103,7 @@ describe('useChildList', () => {
   })
   it('handles api load error', async () => {
     const cachedItems = [{ id: '1' }]
-    await AsyncStorage.setItem('children_all', JSON.stringify(cachedItems))
+    await AsyncStorage.setItem('children_pnr', JSON.stringify(cachedItems))
 
     await act(async () => {
       const { result, waitForNextUpdate } = renderHook(() => useChildList())
