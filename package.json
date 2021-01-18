@@ -7,8 +7,8 @@
   "files": [
     "dist/**/*"
   ],
-  "author": "Johan Öbrink <johan.obrink@gmail.com>",
   "repository": "git@github.com:kolplattformen/react-native-embedded-api.git",
+  "author": "Johan Öbrink <johan.obrink@gmail.com>",
   "license": "Apache-2.0",
   "private": false,
   "scripts": {
