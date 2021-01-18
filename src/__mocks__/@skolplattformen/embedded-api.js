@@ -11,6 +11,7 @@ const api = {
   off: jest.fn().mockImplementation((...args) => emitter.off(...args)),
 
   getSessionCookie: jest.fn(),
+  getPersonalNumber: jest.fn(),
 
   getCalendar: jest.fn(),
   getChildren: jest.fn(),

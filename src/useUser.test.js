@@ -9,6 +9,7 @@ describe('useUser', () => {
   let reject
   beforeEach(() => {
     api.isLoggedIn = true
+    api.getPersonalNumber.mockReturnValue('pnr')
     api.getUser.mockReturnValue(new Promise((_resolve, _reject) => {
       resolve = _resolve
       reject = _reject
@@ -26,7 +27,7 @@ describe('useUser', () => {
   })
   it('data returns contents of async storage', async () => {
     const cachedUser = { id: '1' }
-    await AsyncStorage.setItem('user_me', JSON.stringify(cachedUser))
+    await AsyncStorage.setItem('user_pnr', JSON.stringify(cachedUser))
 
     await act(async () => {
       const { result, waitForNextUpdate } = renderHook(() => useUser())
@@ -39,7 +40,7 @@ describe('useUser', () => {
   })
   it('data changes to contents of api on load', async () => {
     const cachedUser = { id: '1' }
-    await AsyncStorage.setItem('user_me', JSON.stringify(cachedUser))
+    await AsyncStorage.setItem('user_pnr', JSON.stringify(cachedUser))
 
     await act(async () => {
       const { result, waitForNextUpdate } = renderHook(() => useUser())
@@ -56,7 +57,7 @@ describe('useUser', () => {
   })
   it('stores contents of api in cache', async () => {
     const cachedUser = { id: '1' }
-    await AsyncStorage.setItem('user_me', JSON.stringify(cachedUser))
+    await AsyncStorage.setItem('user_pnr', JSON.stringify(cachedUser))
 
     await act(async () => {
       const { waitForNextUpdate } = renderHook(() => useUser())
@@ -67,7 +68,7 @@ describe('useUser', () => {
       resolve(response)
       await waitForNextUpdate()
 
-      const data = JSON.parse(await AsyncStorage.getItem('user_me'))
+      const data = JSON.parse(await AsyncStorage.getItem('user_pnr'))
       expect(data).toEqual(response)
     })
   })
@@ -102,7 +103,7 @@ describe('useUser', () => {
   })
   it('handles api load error', async () => {
     const cachedItems = [{ id: '1' }]
-    await AsyncStorage.setItem('user_me', JSON.stringify(cachedItems))
+    await AsyncStorage.setItem('user_pnr', JSON.stringify(cachedItems))
 
     await act(async () => {
       const { result, waitForNextUpdate } = renderHook(() => useUser())
