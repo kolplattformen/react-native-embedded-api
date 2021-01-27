@@ -1439,10 +1439,10 @@
   dependencies:
     "@sinonjs/commons" "^1.7.0"
 
-"@skolplattformen/embedded-api@^0.16.2":
-  version "0.16.2"
-  resolved "https://registry.yarnpkg.com/@skolplattformen/embedded-api/-/embedded-api-0.16.2.tgz#ba72117771a506c43346a50b4cda09c3f049b826"
-  integrity sha512-5aRU6fb0AYnerFLLgPCcLSKuvXHAQ5S5MoIyBloealDrXk0EcaD0v9W1HSj7ufH9Yxb3HkPEDblL0LCbgZayMA==
+"@skolplattformen/embedded-api@^0.17.0":
+  version "0.17.0"
+  resolved "https://registry.yarnpkg.com/@skolplattformen/embedded-api/-/embedded-api-0.17.0.tgz#602829eba302022e0375197af029126b3f47d8b8"
+  integrity sha512-Y9CdEvHK9gArGfcuT49tQu8jI8JGVgiTRIB2KYDAJrk5kEIw0GkqitVuR23nye49M9xd/TPeaD187SVqFAqwpQ==
   dependencies:
     camelcase-keys "^6.2.2"
     events "^3.2.0"
