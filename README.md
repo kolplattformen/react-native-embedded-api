@@ -12,6 +12,22 @@
 
 ```yarn add @skolplattformen/react-native-embedded-api```
 
+## ApiProvider
+
+In order to use api hooks, you must wrap your app in an ApiProvider
+
+```javascript
+import React from 'react'
+import { ApiProvider } from '@skolplattformen/react-native-embedded-api'
+import { RootComponent } from './components/root
+
+export default () => (
+  <ApiProvider>
+    <RootComponent />
+  </ApiProvider>
+)
+```
+
 ## Login / logout
 
 ```javascript

@@ -1,13 +1,15 @@
+import React from 'react'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { act, renderHook } from '@testing-library/react-hooks'
 import api from './api'
-import { useApi, useChildList, useUser } from './hooks'
-import { clearStore } from './store'
+import { useChildList, useUser } from './hooks'
+import { ApiProvider, useApi } from './context'
 
 jest.mock('@skolplattformen/embedded-api',
   () => jest.requireActual('@skolplattformen/embedded-api'))
 
 describe('useApi - fake mode', () => {
+  const wrapper = ({ children }) => <ApiProvider>{children}</ApiProvider>
   afterEach(async () => {
     api.isLoggedIn = false
     api.isFake = false
@@ -15,7 +17,7 @@ describe('useApi - fake mode', () => {
   const pnr = '121212121212'
   it('status.token is "fake"', async () => {
     await act(async () => {
-      const { result, waitForNextUpdate } = renderHook(() => useApi())
+      const { result, waitForNextUpdate } = renderHook(() => useApi(), { wrapper })
       await waitForNextUpdate()
 
       const { login } = result.current
@@ -26,7 +28,7 @@ describe('useApi - fake mode', () => {
   })
   it('sets isLoggedIn to true', async () => {
     await act(async () => {
-      const { result, waitForNextUpdate } = renderHook(() => useApi())
+      const { result, waitForNextUpdate } = renderHook(() => useApi(), { wrapper })
       await waitForNextUpdate()
 
       const { login } = result.current
@@ -38,7 +40,7 @@ describe('useApi - fake mode', () => {
   })
   it('sets isFake to true', async () => {
     await act(async () => {
-      const { result, waitForNextUpdate } = renderHook(() => useApi())
+      const { result, waitForNextUpdate } = renderHook(() => useApi(), { wrapper })
       await waitForNextUpdate()
       expect(result.current.isFake).toEqual(false)
 
@@ -51,7 +53,7 @@ describe('useApi - fake mode', () => {
   })
   it('returns fake data', async () => {
     await act(async () => {
-      const { result: apiResult, waitForNextUpdate: waitApi } = renderHook(() => useApi())
+      const { result: apiResult, waitForNextUpdate: waitApi } = renderHook(() => useApi(), { wrapper })
       await waitApi()
 
       const { login } = apiResult.current
@@ -71,7 +73,7 @@ describe('useApi - fake mode', () => {
     await act(async () => {
       const spy = jest.spyOn(AsyncStorage, 'getItem')
 
-      const { result: apiResult, waitForNextUpdate: waitApi } = renderHook(() => useApi())
+      const { result: apiResult, waitForNextUpdate: waitApi } = renderHook(() => useApi(), { wrapper })
       await waitApi()
 
       const { login } = apiResult.current
@@ -88,7 +90,7 @@ describe('useApi - fake mode', () => {
     await act(async () => {
       const spy = jest.spyOn(AsyncStorage, 'setItem')
 
-      const { result: apiResult, waitForNextUpdate: waitApi } = renderHook(() => useApi())
+      const { result: apiResult, waitForNextUpdate: waitApi } = renderHook(() => useApi(), { wrapper })
       await waitApi()
 
       const { login } = apiResult.current

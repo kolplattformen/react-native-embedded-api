@@ -12,10 +12,11 @@ module.exports = {
   extends: [
     'airbnb-typescript/base',
   ],
-  ignorePatterns: ['*.test.{js,ts}'],
+  ignorePatterns: ['*.test.{js,ts,jsx,tsx}'],
   rules: {
     'no-param-reassign': 0,
     '@typescript-eslint/semi': [2, 'never'],
+    '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
     'max-len': ['error', { code: 120, 'ignoreUrls': true }],
     'import/prefer-default-export': 0,
   },
