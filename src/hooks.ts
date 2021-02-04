@@ -98,44 +98,6 @@ const createEntityHook = <T, A extends any[]>(entity: string, apiCall: ApiCall<T
 )
 
 // Hooks
-export const useApi = () => {
-  let mounted = false
-  const [isLoggedIn, setIsLoggedIn] = useState(api.isLoggedIn)
-  const [isFake, setIsFake] = useState(api.isFake)
-  const [cookie, setCookie] = useState(api.getSessionCookie())
-
-  const sessionListener = () => {
-    if (!mounted) return
-    setIsLoggedIn(api.isLoggedIn)
-    setIsFake(api.isFake)
-    if (!api.isFake) {
-      setCookie(api.isLoggedIn ? api.getSessionCookie() : undefined)
-    }
-  }
-
-  useEffect(() => {
-    mounted = true
-    api.on('login', sessionListener)
-    api.on('logout', sessionListener)
-
-    return () => {
-      mounted = false
-      api.off('login', sessionListener)
-      api.off('logout', sessionListener)
-    }
-  }, [])
-
-  return {
-    isLoggedIn,
-    isFake,
-    cookie,
-    login: (personalNumber: string) => api.login(personalNumber),
-    logout: () => api.logout(),
-    on: (event: 'login' | 'logout', listener: () => any) => api.on(event, listener),
-    once: (event: 'login' | 'logout', listener: () => any) => api.once(event, listener),
-    off: (event: 'login' | 'logout', listener: () => any) => api.off(event, listener),
-  }
-}
 export const useCalendar = createEntityHook<CalendarItem[], [Child]>(
   'calendar', (child) => api.getCalendar(child), (child) => child.id, [],
 )
