@@ -1,3 +1,7 @@
+-----
+This repo. is deprecated and has been archived. Use https://github.com/kolplattformen/api-hooks instead!
+-----
+
 # @skolplattformen/react-native-embedded-api
 
 1. [Installing](#installing)
